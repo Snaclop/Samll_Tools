@@ -1,5 +1,6 @@
 import json
 import datetime
+import random
 import tkinter as tk
 from tkinter import messagebox
 
@@ -7,7 +8,7 @@ class MyApp():
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("单词记忆系统")
-        self.root.geometry("800x600")
+        self.root.geometry("1000x800")
         self.qbtn = tk.Button(self.root, text="查询单词", command=self.query)
         self.qbtn.pack(pady=5)
         self.abtn = tk.Button(self.root, text="添加单词", command=self.add)
@@ -17,17 +18,12 @@ class MyApp():
         self.read_dict()
         self.root.mainloop()
 
+
     def query(self):
         self.qwin = tk.Toplevel(self.root)
         self.qwin.title("查询单词")
-        self.qwin.geometry("500x600")
+        self.qwin.geometry("600x700")
         self.qwin.transient(self.root)
-        self.qbtn = tk.Button(self.qwin, text="查询单词", command=self.query_word)
-        self.qbtn.pack(pady=5)
-
-    def query_word(self):
-        for widgets in self.qwin.winfo_children():
-            widgets.destroy()
 
         self.lable = tk.Label(self.qwin, text="请输入要查询的单词：")
         self.lable.pack(pady=5)
@@ -55,10 +51,11 @@ class MyApp():
             if info['mark'] == 1:
                 result_list.append(word)
 
+
     def add(self):  # awin是add窗口
         self.awin = tk.Toplevel(self.root)
         self.awin.title("添加单词")
-        self.awin.geometry("500x600")
+        self.awin.geometry("600x700")
         self.awin.transient(self.root)
 
         lable = tk.Label(self.awin, text="请输入单词及释义：")
@@ -92,8 +89,85 @@ class MyApp():
         else:
             messagebox.showerror("错误", "输入不能为空")
 
+
     def review(self):
-        pass
+        self.rwin = tk.Toplevel(self.root)
+        self.rwin.title("复习单词")
+        self.rwin.geometry("600x700")
+        self.rwin.transient(self.root)
+
+        self.re_label = tk.Label(self.rwin, text="请选择复习方式：")
+        self.re_label.pack(pady=5)
+        self.rbtn_1 = tk.Button(self.rwin, text="乱序复习", command=self.review_random)
+        self.rbtn_1.pack(pady=5)
+        self.rbtn_2 = tk.Button(self.rwin, text="复习已标记的单词", command=self.review_mark)
+        self.rbtn_2.pack(pady=5)
+        self.rbtn_3 = tk.Button(self.rwin, text='艾宾浩斯记忆法复习', command=self.review_ebbinghaus)
+        self.rbtn_3.pack(pady=5)
+
+    def review_random(self):
+        messagebox.showinfo('提示', '即将开始乱序复习，复习单词个数上限为20个')
+
+        review_list = list(self.word_dict.keys())
+        random.shuffle(review_list)
+        self.next_word(review_list=review_list, i=0)
+
+    def review_mark(self):
+        for widgets in self.rwin.winfo_children():
+            widgets.destroy()
+
+        messagebox.showinfo('提示', '即将开始复习已标记的单词')
+
+    def review_ebbinghaus(self):
+        for widgets in self.rwin.winfo_children():
+            widgets.destroy()
+
+        messagebox.showinfo('提示', '正在开发中，敬请期待！')
+
+
+    def next_word(self, review_list, i):
+        for widgets in self.rwin.winfo_children():
+            widgets.destroy()
+
+        try:
+            word = review_list[i]
+        except IndexError:
+            messagebox.showinfo('提示', '复习结束')
+            self.rwin.destroy()
+
+        label = tk.Label(self.rwin, text=word)
+        label.pack(pady=5)
+        self.re_entry = tk.Entry(self.rwin)
+        self.re_entry.pack(pady=5)
+        button = tk.Button(self.rwin, text='提交', command=lambda: self.check(word=word, review_list=review_list, i=i))
+        button.pack(pady=5)
+
+
+    def check(self, word, review_list, i):
+        if self.word_dict[word]['meaning'] == self.re_entry.get():
+            messagebox.showinfo('提示', '回答正确')
+            self.next_word(review_list, i = i+1)
+            
+        else:
+            messagebox.showerror('错误', f'回答错误，单词{word}的释义是{self.word_dict[word]["meaning"]}')
+            self.mark_win = tk.Toplevel(self.rwin)
+            self.mark_win.title('标记单词')
+            self.mark_win.geometry('500x400')
+            self.mark_win.transient(self.rwin)
+            label = tk.Label(self.mark_win, text='是否标记该单词？')
+            label.pack(pady=5)
+            yes_btn = tk.Button(self.mark_win, text='是', command=lambda: self.mark_word(word, review_list, i))
+            yes_btn.pack(pady=5)
+            no_btn = tk.Button(self.mark_win, text='否', command=lambda: self.next_word(review_list, i=i+1))
+            no_btn.pack(pady=5)
+
+    def mark_word(self, word, review_list, i):
+        self.word_dict[word]['mark'] = 1
+        with open('word_dict.json', 'w') as f:
+            json.dump(self.word_dict, f)
+        messagebox.showinfo('提示', '单词已标记')
+        self.mark_win.destroy()
+        self.next_word(review_list, i=i+1)
 
     def read_dict(self):
         try:
@@ -101,6 +175,7 @@ class MyApp():
                 self.word_dict = json.load(f)
         except:
             self.word_dict = {}
+
 
 if __name__ == "__main__":
     app = MyApp()
