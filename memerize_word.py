@@ -22,12 +22,8 @@ class MyApp():
         self.qwin.title("查询单词")
         self.qwin.geometry("500x600")
         self.qwin.transient(self.root)
-        self.lable = tk.Label(self.qwin, text="请选择查询方式：")
-        self.lable.pack(pady=5)
-        self.qbtn1 = tk.Button(self.qwin, text="按单词查询", command=self.query_word)
-        self.qbtn1.pack(pady=5)
-        self.qbtn2 = tk.Button(self.qwin, text="按标记查询", command=self.query_mark)
-        self.qbtn2.pack(pady=5)
+        self.qbtn = tk.Button(self.qwin, text="查询单词", command=self.query_word)
+        self.qbtn.pack(pady=5)
 
     def query_word(self):
         for widgets in self.qwin.winfo_children():
