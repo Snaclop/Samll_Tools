@@ -1,5 +1,6 @@
 import json
 import datetime
+from datetime import timedelta
 import random
 import tkinter as tk
 from tkinter import messagebox
@@ -86,6 +87,8 @@ class MyApp():
                 with open("word_dict.json", "w") as f:
                     json.dump(self.word_dict, f)
                 messagebox.showinfo("提示", "单词添加成功")
+                self.entry_word.delete(0, tk.END)
+                self.entry_meaning.delete(0, tk.END)
         else:
             messagebox.showerror("错误", "输入不能为空")
 
@@ -106,24 +109,42 @@ class MyApp():
         self.rbtn_3.pack(pady=5)
 
     def review_random(self):
-        messagebox.showinfo('提示', '即将开始乱序复习，复习单词个数上限为20个')
+        messagebox.showinfo('提示', '即将开始乱序复习')
 
         review_list = list(self.word_dict.keys())
         random.shuffle(review_list)
         self.next_word(review_list=review_list, i=0)
 
     def review_mark(self):
-        for widgets in self.rwin.winfo_children():
-            widgets.destroy()
-
         messagebox.showinfo('提示', '即将开始复习已标记的单词')
 
+        review_list = []
+        for word, info in self.word_dict.items():
+            if info['mark'] == 1:
+                review_list.append(word)
+        self.next_word(review_list=review_list, i=0)
+
     def review_ebbinghaus(self):
-        for widgets in self.rwin.winfo_children():
-            widgets.destroy()
+        messagebox.showinfo('提示', '即将开始艾宾浩斯复习')
 
-        messagebox.showinfo('提示', '正在开发中，敬请期待！')
+        review_list = []
+        today = datetime.datetime.now()
+        review_dates = []
+        
+        #  创建艾宾浩斯复习时间列表
+        ebinhhaus_days = [1, 2, 4, 7, 15, 30]
+        for i in ebinhhaus_days:
+            review_date = today - timedelta(days=i)
+            review_date = review_date.strftime('%Y-%m-%d')
+            review_dates.append(review_date)
 
+        #  读取艾宾浩斯复习时间列表、单词字典以及对应时间
+        for date in review_dates:
+            for word, info in self.word_dict.items():
+                if info['time'] == date:
+                    review_list.append(word)
+        self.next_word(review_list=review_list, i=0)
+            
 
     def next_word(self, review_list, i):
         for widgets in self.rwin.winfo_children():
@@ -132,7 +153,7 @@ class MyApp():
         try:
             word = review_list[i]
         except IndexError:
-            messagebox.showinfo('提示', '复习结束')
+            messagebox.showinfo('提示', '没有单词了')
             self.rwin.destroy()
 
         label = tk.Label(self.rwin, text=word)
